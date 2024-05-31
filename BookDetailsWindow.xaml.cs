@@ -25,20 +25,22 @@ namespace WpfApp1
         {
             InitializeComponent();
             this.book = book;
-            LoadBookDetails();
+            InitializeBookData();
         }
 
-        private void LoadBookDetails()
+        private void InitializeBookData()
         {
-            BookImage.Source = new BitmapImage(new Uri(book.ImagePath, UriKind.Relative));
-            BookTitle.Text = book.Title;
-            BookGenre.Text = $"Genre: {book.Genre}";
-            BookDescription.Text = book.Description;
-            BookPrice.Text = $"Price: ${book.Price}";
+            TitleTextBlock.Text = book.Title;
+            GenreTextBlock.Text = book.Genre;
+            DescriptionTextBlock.Text = book.Description;
+            PriceTextBlock.Text = $"${book.Price}";
+            BookImage.Source = new BitmapImage(new Uri(book.ImagePath));
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
+            var homeWindow = new HomeWindow();
+            homeWindow.Show();
             this.Close();
         }
     }

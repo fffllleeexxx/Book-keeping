@@ -6,27 +6,27 @@
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
         Title="BookDetailsWindow" Height="450" Width="800">
-    <Grid>
+    <Grid Background="Lavender">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
 
-        <Button Content="Back" HorizontalAlignment="Left" VerticalAlignment="Top" Click="BackButton_Click"/>
+        <Button x:Name="BackButton" Grid.Row="0" Content="Back" Width="75" Margin="10" Click="BackButton_Click"/>
 
         <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="3*"/>
             </Grid.ColumnDefinitions>
 
-            <Image x:Name="BookImage" Grid.Column="0" Margin="10" Stretch="Uniform"/>
+            <Image x:Name="BookImage" Grid.Column="0" Margin="10"/>
 
             <StackPanel Grid.Column="1" Margin="10">
-                <TextBlock x:Name="BookTitle" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
-                <TextBlock x:Name="BookGenre" FontSize="16" Margin="0,0,0,10"/>
-                <TextBlock x:Name="BookDescription" FontSize="14" Margin="0,0,0,10"/>
-                <TextBlock x:Name="BookPrice" FontSize="16" Foreground="Green" Margin="0,0,0,10"/>
+                <TextBlock x:Name="TitleTextBlock" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+                <TextBlock x:Name="GenreTextBlock" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                <TextBlock x:Name="DescriptionTextBlock" FontSize="16" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                <TextBlock x:Name="PriceTextBlock" FontSize="18" FontWeight="SemiBold" Foreground="Green"/>
             </StackPanel>
         </Grid>
     </Grid>

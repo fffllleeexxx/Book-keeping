@@ -9,7 +9,7 @@
     <Grid Background="Lavender">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="1*"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
@@ -18,38 +18,34 @@
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
-
             <WrapPanel Grid.Column="0" Margin="6" HorizontalAlignment="Center">
                 <Label Content="Search:"/>
-                <TextBox x:Name="SearchTB" Width="175"></TextBox>
+                <TextBox x:Name="SearchTB" Width="175" TextChanged="SearchTB_TextChanged"></TextBox>
             </WrapPanel>
-
             <WrapPanel Grid.Column="1" Margin="6" HorizontalAlignment="Center">
                 <Label Content="Filter:"/>
-                <ComboBox Width="125" x:Name="FilterCB" DisplayMemberPath="Title"></ComboBox>
+                <ComboBox x:Name="FilterCB" Width="125" SelectionChanged="FilterCB_SelectionChanged">
+                    <ComboBoxItem Content="Genre"/>
+                    <ComboBoxItem Content="Price"/>
+                </ComboBox>
             </WrapPanel>
-
             <WrapPanel Grid.Column="2" Margin="6" HorizontalAlignment="Center">
                 <Label Content="Sort:"/>
                 <ComboBox x:Name="SortCB" Width="125" SelectionChanged="SortCB_SelectionChanged">
-                    <ComboBoxItem Content="Price"/>
-                    <ComboBoxItem Content="Genre"/>
                     <ComboBoxItem Content="Title"/>
+                    <ComboBoxItem Content="Genre"/>
+                    <ComboBoxItem Content="Price"/>
                 </ComboBox>
             </WrapPanel>
-
-            <Button Grid.Column="3" Content="Reset Filters" Click="ResetFiltersButton_Click" Margin="6" HorizontalAlignment="Center"/>
         </Grid>
 
-        <ListView Name="LstView" Grid.Row="1" MouseRightButtonUp="LstView_MouseRightButtonUp">
+        <ListView x:Name="LstView" Grid.Row="1" Margin="20" MouseRightButtonUp="LstView_MouseRightButtonUp">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn DisplayMemberBinding="{Binding Path=Id}" Header="Id"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding Path=Title}" Header="Title" Width="100"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding Path=Genre}" Header="Genre" Width="100"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding Path=Price}" Header="Price" Width="100"/>
+                    <GridViewColumn Header="Title" DisplayMemberBinding="{Binding Title}" Width="200"/>
+                    <GridViewColumn Header="Genre" DisplayMemberBinding="{Binding Genre}" Width="100"/>
+                    <GridViewColumn Header="Price" DisplayMemberBinding="{Binding Price}" Width="100"/>
                 </GridView>
             </ListView.View>
             <ListView.ContextMenu>
@@ -60,5 +56,7 @@
                 </ContextMenu>
             </ListView.ContextMenu>
         </ListView>
+
+        <Button x:Name="ResetFiltersButton" Grid.Row="2" Content="Reset Filters" Width="150" Height="35" HorizontalAlignment="Center" Margin="20" Click="ResetFiltersButton_Click"/>
     </Grid>
 </Window>

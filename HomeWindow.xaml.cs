@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,46 +23,135 @@ namespace WpfApp1
     {
         private List<Book> allBooks;
         private List<Book> displayedBooks;
-        private Book selectedBook;
+        private string connectionString;
 
         public HomeWindow()
         {
             InitializeComponent();
+            connectionString = ConfigurationManager.ConnectionStrings["BooksDB"].ConnectionString;
             InitializeBooks();
-            LstView.ItemsSource = displayedBooks;
         }
 
         private void InitializeBooks()
         {
-            allBooks = new List<Book>
+            allBooks = new List<Book>();
+            using (var connection = new SqlConnection(connectionString))
             {
-                new Book { Id = 1, Title = "Book 1", Genre = "Fiction", Price = 4.99, Description = "Description of Book 1", ImagePath = "Images/book1.jpg" },
-                new Book { Id = 2, Title = "Book 2", Genre = "Non-Fiction", Price = 9.99, Description = "Description of Book 2", ImagePath = "Images/book2.jpg" },
-                new Book { Id = 3, Title = "Book 3", Genre = "Mystery", Price = 15.99, Description = "Description of Book 3", ImagePath = "Images/book3.jpg" },
-                new Book { Id = 4, Title = "Book 4", Genre = "Fantasy", Price = 5.99, Description = "Description of Book 4", ImagePath = "Images/book4.jpg" },
-                new Book { Id = 5, Title = "Book 5", Genre = "Science Fiction", Price = 12.99, Description = "Description of Book 5", ImagePath = "Images/book5.jpg" },
-                new Book { Id = 6, Title = "Book 6", Genre = "Romance", Price = 7.99, Description = "Description of Book 6", ImagePath = "Images/book6.jpg" },
-                new Book { Id = 7, Title = "Book 7", Genre = "Thriller", Price = 10.99, Description = "Description of Book 7", ImagePath = "Images/book7.jpg" },
-                new Book { Id = 8, Title = "Book 8", Genre = "Historical", Price = 3.99, Description = "Description of Book 8", ImagePath = "Images/book8.jpg" },
-                new Book { Id = 9, Title = "Book 9", Genre = "Biography", Price = 11.99, Description = "Description of Book 9", ImagePath = "Images/book9.jpg" },
-                new Book { Id = 10, Title = "Book 10", Genre = "Adventure", Price = 14.99, Description = "Description of Book 10", ImagePath = "Images/book10.jpg" },
-            };
+                connection.Open();
+                var query = "SELECT B.Id, B.Title, B.Price, B.Description, B.ImagePath, G.Name AS Genre FROM Books B JOIN Genres G ON B.GenreId = G.Id";
+                using (var command = new SqlCommand(query, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        allBooks.Add(new Book
+                        {
+                            Id = reader.GetInt32(0),
+                            Title = reader.GetString(1),
+                            Price = reader.GetDecimal(2),
+                            Description = reader.GetString(3),
+                            ImagePath = reader.GetString(4),
+                            Genre = reader.GetString(5)
+                        });
+                    }
+                }
+            }
             displayedBooks = new List<Book>(allBooks);
+            LstView.ItemsSource = displayedBooks;
+        }
+
+        private void SearchTB_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var searchText = SearchTB.Text.ToLower();
+            displayedBooks = allBooks.Where(book => book.Title.ToLower().Contains(searchText)).ToList();
+            LstView.ItemsSource = displayedBooks;
+        }
+
+        private void FilterCB_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedFilter = FilterCB.SelectedItem as ComboBoxItem;
+            if (selectedFilter != null)
+            {
+                if (selectedFilter.Content.ToString() == "Genre")
+                {
+                    ShowGenreFilterMenu();
+                }
+                else if (selectedFilter.Content.ToString() == "Price")
+                {
+                    ShowPriceFilterMenu();
+                }
+            }
+        }
+
+        private void ShowGenreFilterMenu()
+        {
+            var genreFilterMenu = new ContextMenu();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT Name FROM Genres";
+                using (var command = new SqlCommand(query, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var genre = reader.GetString(0);
+                        var menuItem = new MenuItem { Header = genre };
+                        menuItem.Click += (s, e) => FilterBooksByGenre(genre);
+                        genreFilterMenu.Items.Add(menuItem);
+                    }
+                }
+            }
+
+            genreFilterMenu.IsOpen = true;
+        }
+
+        private void ShowPriceFilterMenu()
+        {
+            var priceFilterMenu = new ContextMenu();
+            var priceRanges = new List<Tuple<string, Func<Book, bool>>>
+            {
+                new Tuple<string, Func<Book, bool>>("Up to $5", book => book.Price <= 5),
+                new Tuple<string, Func<Book, bool>>("$5 to $10", book => book.Price > 5 && book.Price <= 10),
+                new Tuple<string, Func<Book, bool>>("Above $10", book => book.Price > 10)
+            };
+
+            foreach (var range in priceRanges)
+            {
+                var menuItem = new MenuItem { Header = range.Item1 };
+                menuItem.Click += (s, e) => FilterBooksByPrice(range.Item2);
+                priceFilterMenu.Items.Add(menuItem);
+            }
+
+            priceFilterMenu.IsOpen = true;
+        }
+
+        private void FilterBooksByGenre(string genre)
+        {
+            displayedBooks = allBooks.Where(book => book.Genre == genre).ToList();
+            LstView.ItemsSource = displayedBooks;
+        }
+
+        private void FilterBooksByPrice(Func<Book, bool> priceFilter)
+        {
+            displayedBooks = allBooks.Where(priceFilter).ToList();
+            LstView.ItemsSource = displayedBooks;
         }
 
         private void SortCB_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (SortCB.SelectedItem is ComboBoxItem selectedItem)
+            var selectedSort = SortCB.SelectedItem as ComboBoxItem;
+            if (selectedSort != null)
             {
-                if (selectedItem.Content.ToString() == "Price")
+                if (selectedSort.Content.ToString() == "Price")
                 {
                     ShowPriceSortMenu();
                 }
-                else if (selectedItem.Content.ToString() == "Genre")
+                else if (selectedSort.Content.ToString() == "Genre")
                 {
                     ShowGenreSortMenu();
                 }
-                else if (selectedItem.Content.ToString() == "Title")
+                else if (selectedSort.Content.ToString() == "Title")
                 {
                     ShowTitleSortMenu();
                 }
@@ -84,13 +175,13 @@ namespace WpfApp1
         private void ShowGenreSortMenu()
         {
             var genreSortMenu = new ContextMenu();
-            var azItem = new MenuItem { Header = "A to Z" };
-            azItem.Click += (s, e) => SortBooksByGenre(true);
-            var zaItem = new MenuItem { Header = "Z to A" };
-            zaItem.Click += (s, e) => SortBooksByGenre(false);
+            var ascItem = new MenuItem { Header = "A to Z" };
+            ascItem.Click += (s, e) => SortBooksByGenre(true);
+            var descItem = new MenuItem { Header = "Z to A" };
+            descItem.Click += (s, e) => SortBooksByGenre(false);
 
-            genreSortMenu.Items.Add(azItem);
-            genreSortMenu.Items.Add(zaItem);
+            genreSortMenu.Items.Add(ascItem);
+            genreSortMenu.Items.Add(descItem);
 
             genreSortMenu.IsOpen = true;
         }
@@ -98,13 +189,13 @@ namespace WpfApp1
         private void ShowTitleSortMenu()
         {
             var titleSortMenu = new ContextMenu();
-            var azItem = new MenuItem { Header = "A to Z" };
-            azItem.Click += (s, e) => SortBooksByTitle(true);
-            var zaItem = new MenuItem { Header = "Z to A" };
-            zaItem.Click += (s, e) => SortBooksByTitle(false);
+            var ascItem = new MenuItem { Header = "A to Z" };
+            ascItem.Click += (s, e) => SortBooksByTitle(true);
+            var descItem = new MenuItem { Header = "Z to A" };
+            descItem.Click += (s, e) => SortBooksByTitle(false);
 
-            titleSortMenu.Items.Add(azItem);
-            titleSortMenu.Items.Add(zaItem);
+            titleSortMenu.Items.Add(ascItem);
+            titleSortMenu.Items.Add(descItem);
 
             titleSortMenu.IsOpen = true;
         }
@@ -122,9 +213,9 @@ namespace WpfApp1
             LstView.ItemsSource = displayedBooks;
         }
 
-        private void SortBooksByGenre(bool az)
+        private void SortBooksByGenre(bool ascending)
         {
-            if (az)
+            if (ascending)
             {
                 displayedBooks = displayedBooks.OrderBy(book => book.Genre).ToList();
             }
@@ -135,9 +226,9 @@ namespace WpfApp1
             LstView.ItemsSource = displayedBooks;
         }
 
-        private void SortBooksByTitle(bool az)
+        private void SortBooksByTitle(bool ascending)
         {
-            if (az)
+            if (ascending)
             {
                 displayedBooks = displayedBooks.OrderBy(book => book.Title).ToList();
             }
@@ -150,62 +241,60 @@ namespace WpfApp1
 
         private void ResetFiltersButton_Click(object sender, RoutedEventArgs e)
         {
-            SearchTB.Text = string.Empty;
-            FilterCB.SelectedIndex = -1;
-            SortCB.SelectedIndex = -1;
             displayedBooks = new List<Book>(allBooks);
             LstView.ItemsSource = displayedBooks;
+            SearchTB.Clear();
+            FilterCB.SelectedIndex = -1;
+            SortCB.SelectedIndex = -1;
+        }
+
+        private void LstView_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (LstView.SelectedItem != null)
+            {
+                LstView.ContextMenu.IsOpen = true;
+            }
         }
 
         private void ViewMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if (LstView.SelectedItem is Book selectedBook)
+            var selectedBook = LstView.SelectedItem as Book;
+            if (selectedBook != null)
             {
-                BookDetailsWindow viewBookWindow = new BookDetailsWindow(selectedBook);
-                viewBookWindow.ShowDialog();
+                var viewWindow = new BookDetailsWindow(selectedBook);
+                viewWindow.Show();
+                this.Close();
             }
         }
 
         private void EditMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if (LstView.SelectedItem is Book selectedBook)
+            var selectedBook = LstView.SelectedItem as Book;
+            if (selectedBook != null)
             {
-                EditBookWindow editBookWindow = new EditBookWindow(selectedBook);
-                if (editBookWindow.ShowDialog() == true)
-                {
-                    LstView.ItemsSource = null;
-                    LstView.ItemsSource = displayedBooks;
-                }
+                var editWindow = new EditBookWindow(selectedBook);
+                editWindow.Show();
+                this.Close();
             }
         }
 
         private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if (LstView.SelectedItem is Book selectedBook)
+            var selectedBook = LstView.SelectedItem as Book;
+            if (selectedBook != null)
             {
-                var result = MessageBox.Show("Are you sure you want to delete this book?", "Confirm Delete", MessageBoxButton.YesNo);
-                if (result == MessageBoxResult.Yes)
+                using (var connection = new SqlConnection(connectionString))
                 {
-                    displayedBooks.Remove(selectedBook);
-                    allBooks.Remove(selectedBook);
-                    LstView.ItemsSource = null;
-                    LstView.ItemsSource = displayedBooks;
+                    connection.Open();
+                    var query = "DELETE FROM Books WHERE Id = @Id";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Id", selectedBook.Id);
+                        command.ExecuteNonQuery();
+                    }
                 }
+                InitializeBooks();
             }
-        }
-
-        private void LstView_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            var listView = sender as ListView;
-            if (listView.SelectedItem == null)
-            {
-                return;
-            }
-
-            selectedBook = listView.SelectedItem as Book;
-            ContextMenu contextMenu = listView.ContextMenu;
-            contextMenu.PlacementTarget = listView;
-            contextMenu.IsOpen = true;
         }
     }
 
@@ -214,7 +303,7 @@ namespace WpfApp1
         public int Id { get; set; }
         public string Title { get; set; }
         public string Genre { get; set; }
-        public double Price { get; set; }
+        public decimal Price { get; set; }
         public string Description { get; set; }
         public string ImagePath { get; set; }
     }

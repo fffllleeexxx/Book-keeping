@@ -6,36 +6,29 @@
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
         Title="EditBookWindow" Height="450" Width="800">
-    <Grid>
+    <Grid Background="Lavender">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <Button Content="Back" HorizontalAlignment="Left" VerticalAlignment="Top" Click="BackButton_Click"/>
+        <Button x:Name="BackButton" Grid.Row="0" Content="Back" Width="75" Margin="10" Click="BackButton_Click"/>
 
-        <Grid Grid.Row="1" Margin="10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="3*"/>
-            </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="1" Margin="10">
+            <Label Content="Title:"/>
+            <TextBox x:Name="TitleTextBox"/>
+            <Label Content="Price:"/>
+            <TextBox x:Name="PriceTextBox"/>
+            <Label Content="Description:"/>
+            <TextBox x:Name="DescriptionTextBox"/>
+            <Label Content="Genre:"/>
+            <ComboBox x:Name="GenreComboBox"/>
+            <Label Content="Image Path:"/>
+            <TextBox x:Name="ImagePathTextBox" IsReadOnly="True"/>
+            <Button x:Name="UploadImageButton" Content="Upload Image" Click="UploadImageButton_Click"/>
+        </StackPanel>
 
-            <StackPanel Grid.Column="0" Margin="10">
-                <Button Content="Load Image" Click="LoadImageButton_Click"/>
-                <Image x:Name="BookImage" Margin="10" Stretch="Uniform"/>
-            </StackPanel>
-
-            <StackPanel Grid.Column="1" Margin="10">
-                <TextBlock Text="Title"></TextBlock>
-                <TextBox x:Name="BookTitleTextBox" FontSize="16" Margin="0,0,0,10"/>
-                <TextBlock Text="Genre"></TextBlock>
-                <TextBox x:Name="BookGenreTextBox" FontSize="16" Margin="0,0,0,10"/>
-                <TextBlock Text="Description"></TextBlock>
-                <TextBox x:Name="BookDescriptionTextBox" FontSize="14" Margin="0,0,0,10"/>
-                <TextBlock Text="Price"></TextBlock>
-                <TextBox x:Name="BookPriceTextBox" FontSize="16" Margin="0,0,0,10"/>
-                <Button Content="Save" Click="SaveButton_Click"/>
-            </StackPanel>
-        </Grid>
+        <Button x:Name="SaveButton" Grid.Row="2" Content="Save" Width="100" Height="35" HorizontalAlignment="Center" Margin="10" Click="SaveButton_Click"/>
     </Grid>
 </Window>
